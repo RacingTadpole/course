@@ -41,8 +41,7 @@ instance Functor Id where
     (a -> b)
     -> Id a
     -> Id b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance Id"
+  (<$>) f (Id a) = Id (f a)
 
 -- | Maps a function on the List functor.
 --
@@ -56,8 +55,7 @@ instance Functor List where
     (a -> b)
     -> List a
     -> List b
-  (<$>) =
-    error "todo: Course.Functor (<$>)#instance List"
+  (<$>) = map
 
 -- | Maps a function on the Optional functor.
 --
@@ -72,7 +70,7 @@ instance Functor Optional where
     -> Optional a
     -> Optional b
   (<$>) =
-    error "todo: Course.Functor (<$>)#instance Optional"
+    mapOptional
 
 -- | Maps a function on the reader ((->) t) functor.
 --
@@ -81,15 +79,25 @@ instance Functor Optional where
 instance Functor ((->) t) where
   (<$>) ::
     (a -> b)
-    -> ((->) t a)
-    -> ((->) t b)
-  (<$>) =
-    error "todo: Course.Functor (<$>)#((->) t)"
+    -> (t -> a)   -- rewriting ((->) t a)
+    -> t -> b   -- rewriting ((->) t b)
+  -- five equivalent ways to write it
+  (<$>) = (.)
+  -- (<$>) ab ta = (.) ab ta
+  -- (<$>) ab ta = ab . ta
+  -- (<$>) ab ta tt = (ab . ta) tt
+  -- (<$>) ab ta tt = ab (ta tt)   -- t passed in to t->a, passed in to a->b. Gives b.
 
 -- | Anonymous map. Maps a constant value on a functor.
 --
 -- >>> 7 <$ (1 :. 2 :. 3 :. Nil)
 -- [7,7,7]
+--
+-- >>> (7 <$ (+10)) 9
+-- 7
+--
+-- >>> 7 <$ Full 8
+-- 7
 --
 -- prop> x <$ (a :. b :. c :. Nil) == (x :. x :. x :. Nil)
 --
@@ -99,8 +107,7 @@ instance Functor ((->) t) where
   a
   -> f b
   -> f a
-(<$) =
-  error "todo: Course.Functor#(<$)"
+(<$) = \a -> (<$>) (const a)
 
 -- | Anonymous map producing unit value.
 --
