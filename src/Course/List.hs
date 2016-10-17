@@ -377,8 +377,7 @@ produce ::
   (a -> a)
   -> a
   -> List a
-produce =
-  error "todo: Course.List#produce"
+produce f a = a :. produce f (f a)
 
 -- | Do anything other than reverse a list.
 -- Is it even possible?
@@ -393,7 +392,7 @@ notReverse ::
   List a
   -> List a
 notReverse Nil = Nil
-notReverse (h :. t) = h :. h :. notReverse t  -- sure, this repeats each element.
+notReverse (h :. t) = h :. h :. notReverse t  -- sure, this repeats each element. But if fails the prop.
 
 ---- End of list exercises
 
