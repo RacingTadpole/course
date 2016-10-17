@@ -265,7 +265,8 @@ flattenAgain = flatMap id
 seqOptional ::
   List (Optional a)
   -> Optional (List a)
-seqOptional Nil = Full Nil
+
+-- seqOptional Nil = Full Nil
 -- seqOptional (h :. t) =
 --   case h of
 --     Full a ->
@@ -274,18 +275,20 @@ seqOptional Nil = Full Nil
 --         Empty -> Empty
 --     Empty -> Empty
 
-seqOptional ((Full a) :. t) =
-    case seqOptional t of
-      Full x -> Full (a :. x)
-      Empty -> Empty
-seqOptional (Empty :. _) = Empty
+-- seqOptional ((Full a) :. t) =
+--     case seqOptional t of
+--       Full x -> Full (a :. x)
+--       Empty -> Empty
+-- seqOptional ((Full a) :. t) =
+--   mapOptional a (seqOptional t)
+-- seqOptional (Empty :. _) = Empty
 
--- foldRight :: (a -> b -> b) -> b -> List a -> b
--- foldRight _ b Nil      = b
--- foldRight f b (h :. t) = f h (foldRight f b t)
+-- seqOptional (h:.t) = bindOptional (\w -> mapOptional (w:.) (seqOptional t)) h
+-- seqOptional x = foldRight 
+--   (\h t -> bindOptional (\w -> mapOptional (w:.) t ) h)
+--   (Full Nil)
 
--- seqOptional x = foldRight (\m n -> case m of)
-
+seqOptional = foldRight (twiceOptional (:.)) (Full Nil)
 
 -- | Find the first element in the list matching the predicate.
 --
@@ -307,8 +310,12 @@ find ::
   (a -> Bool)
   -> List a
   -> Optional a
-find =
-  error "todo: Course.List#find"
+
+-- find = error "todo: Course.List#find"
+find _ Nil = Empty
+find f (h :. t) = case f h of
+  True -> Full h
+  False -> find f t
 
 -- | Determine if the length of the given list is greater than 4.
 --
@@ -326,8 +333,12 @@ find =
 lengthGT4 ::
   List a
   -> Bool
-lengthGT4 =
-  error "todo: Course.List#lengthGT4"
+-- lengthGT4 Nil = False
+-- lengthGT4 (_ :. Nil) = False
+-- lengthGT4 (_ :. _ :. Nil) = False
+-- lengthGT4 (_ :. _ :. _ :. Nil) = False
+lengthGT4 (_ :. _ :. _ :. _ :. _) = True
+lengthGT4 _ = False
 
 -- | Reverse a list.
 --
@@ -343,8 +354,16 @@ lengthGT4 =
 reverse ::
   List a
   -> List a
-reverse =
-  error "todo: Course.List#reverse"
+
+-- reverse Nil = Nil
+-- reverse (h :. t) = reverse t ++ (h :. Nil)  -- slow
+
+-- reversee :: List a -> List a -> List a
+-- reversee acc Nil = acc
+-- reversee acc (h :. t) = reversee (h :. acc) t
+-- reverse = reversee Nil
+
+reverse = foldLeft (flip (:.)) Nil
 
 -- | Produce an infinite `List` that seeds with the given value at its head,
 -- then runs the given function for subsequent elements
@@ -373,8 +392,8 @@ produce =
 notReverse ::
   List a
   -> List a
-notReverse =
-  error "todo: Is it even possible?"
+notReverse Nil = Nil
+notReverse (h :. t) = h :. h :. notReverse t  -- sure, this repeats each element.
 
 ---- End of list exercises
 
