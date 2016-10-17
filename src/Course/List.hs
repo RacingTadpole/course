@@ -20,7 +20,7 @@ import Course.Optional
 import qualified System.Environment as E
 import qualified Prelude as P
 import qualified Numeric as N
-
+import Data.Bool
 
 -- $setup
 -- >>> import Test.QuickCheck
@@ -75,8 +75,8 @@ headOr ::
   a
   -> List a
   -> a
-headOr =
-  error "todo: Course.List#headOr"
+headOr d Nil = d
+headOr _ (head :. _) = head
 
 -- | The product of the elements of a list.
 --
@@ -88,8 +88,8 @@ headOr =
 product ::
   List Int
   -> Int
-product =
-  error "todo: Course.List#product"
+product Nil = 1
+product (head :. tail) = head * product (tail)
 
 -- | Sum the elements of the list.
 --
@@ -103,8 +103,12 @@ product =
 sum ::
   List Int
   -> Int
-sum =
-  error "todo: Course.List#sum"
+-- just to try it a different way
+-- sum x = foldRight (+) 0 x
+sum = foldRight (+) 0
+-- sum Nil = 0
+-- sum (head :. tail) = head + sum (tail)
+
 
 -- | Return the length of the list.
 --
@@ -115,8 +119,9 @@ sum =
 length ::
   List a
   -> Int
-length =
-  error "todo: Course.List#length"
+-- length Nil = 0
+-- length (_ :. tail) = 1 + length tail
+length = foldLeft(\r _ -> r + 1) 0
 
 -- | Map the given function on each element of the list.
 --
@@ -130,8 +135,9 @@ map ::
   (a -> b)
   -> List a
   -> List b
-map =
-  error "todo: Course.List#map"
+map _ Nil = Nil
+map f (h :. t) = f h :. map f t
+-- map = foldRight (\h t -> f h :. t) Nil
 
 -- | Return elements satisfying the given predicate.
 --
@@ -147,8 +153,13 @@ filter ::
   (a -> Bool)
   -> List a
   -> List a
-filter =
-  error "todo: Course.List#filter"
+filter _ Nil = Nil
+-- "pattern guard" approach
+-- filter f (h :. t)
+--   | f(h) = h :. filter f t
+--   | otherwise = filter f t
+filter f (h :. t) = bool id ((:.) h) (f h) (filter f t)
+-- filter f = foldRight (\h t -> bool t (h :. t) (f h)) Nil
 
 -- | Append two lists to a new list.
 --
@@ -166,8 +177,11 @@ filter =
   List a
   -> List a
   -> List a
-(++) =
-  error "todo: Course.List#(++)"
+(++) Nil Nil = Nil
+(++) l Nil = l
+-- (++) l (h :. t) = (l :. h) ++ t   -- didn't quite get this right yet
+(++) x y = foldRight (:.) y x  -- foldRight replaces :. with :., and Nil with y.
+-- (++) = flip (foldRight (:.))
 
 infixr 5 ++
 
@@ -184,8 +198,7 @@ infixr 5 ++
 flatten ::
   List (List a)
   -> List a
-flatten =
-  error "todo: Course.List#flatten"
+flatten = foldRight (++) Nil  -- replace :. with ++, Nil with Nil.
 
 -- | Map a function then flatten to a list.
 --
@@ -201,8 +214,19 @@ flatMap ::
   (a -> List b)
   -> List a
   -> List b
-flatMap =
-  error "todo: Course.List#flatMap"
+-- flatMap f x = flatten (map f x)
+-- flatMap f = flatten . map f
+
+-- or,
+-- flatMap _ Nil = Nil
+-- flatMap f (h :. t) = f h ++ flatMap f t
+-- or,
+-- flatMap f x = foldRight (\h t -> f h ++ t) Nil
+-- flatMap f x = foldRight (\h -> (++) f h) Nil
+flatMap f = foldRight ((++) . f) Nil
+-- (b -> c) -> (a -> b) -> (a -> c) is . (function composition)
+-- (.) :: (b -> c) -> (a -> b) -> (a -> c)
+-- (.) f g a = f (g a)
 
 -- | Flatten a list of lists to a list (again).
 -- HOWEVER, this time use the /flatMap/ function that you just wrote.
@@ -211,8 +235,10 @@ flatMap =
 flattenAgain ::
   List (List a)
   -> List a
-flattenAgain =
-  error "todo: Course.List#flattenAgain"
+flattenAgain = flatMap id
+
+-- product2 :: List x -> List y -> List (x, y)
+-- product2 x y = flatMap (\xx -> flatMap(\yy -> (xx, yy))) Nil
 
 -- | Convert a list of optional values to an optional list of values.
 --
@@ -239,8 +265,27 @@ flattenAgain =
 seqOptional ::
   List (Optional a)
   -> Optional (List a)
-seqOptional =
-  error "todo: Course.List#seqOptional"
+seqOptional Nil = Full Nil
+-- seqOptional (h :. t) =
+--   case h of
+--     Full a ->
+--       case seqOptional t of
+--         Full x -> Full (a :. x)
+--         Empty -> Empty
+--     Empty -> Empty
+
+seqOptional ((Full a) :. t) =
+    case seqOptional t of
+      Full x -> Full (a :. x)
+      Empty -> Empty
+seqOptional (Empty :. _) = Empty
+
+-- foldRight :: (a -> b -> b) -> b -> List a -> b
+-- foldRight _ b Nil      = b
+-- foldRight f b (h :. t) = f h (foldRight f b t)
+
+-- seqOptional x = foldRight (\m n -> case m of)
+
 
 -- | Find the first element in the list matching the predicate.
 --
