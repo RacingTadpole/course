@@ -107,7 +107,9 @@ instance Functor ((->) t) where
   a
   -> f b
   -> f a
-(<$) = \a -> (<$>) (const a)
+-- (<$) = \a -> (<$>) (const a)
+-- q <$ fb = (const q) <$> fb  -- this makes most sense to me
+(<$) q = (<$>) (const q)
 
 -- | Anonymous map producing unit value.
 --

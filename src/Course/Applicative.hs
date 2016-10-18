@@ -61,7 +61,7 @@ infixl 4 <*>
   (a -> b)
   -> f a
   -> f b
-k (<$>) u = (pure k) <*> u
+k <$> u = pure k <*> u
 
 --  error "todo: Course.Applicative#(<$>)"
 
@@ -76,13 +76,14 @@ instance Applicative Id where
     a
     -> Id a
   pure =
-    error "todo: Course.Applicative pure#instance Id"
+    Id
   (<*>) :: 
     Id (a -> b)
     -> Id a
     -> Id b
-  (<*>) =
-    error "todo: Course.Applicative (<*>)#instance Id"
+  Id f <*> Id a = Id (f a)
+  -- (<*>) =
+  --   error "todo: Course.Applicative (<*>)#instance Id"
 
 -- | Insert into a List.
 --
@@ -94,14 +95,35 @@ instance Applicative List where
   pure ::
     a
     -> List a
-  pure =
-    error "todo: Course.Applicative pure#instance List"
+  pure a = a :. Nil  -- pure puts the element in a List once.
   (<*>) ::
     List (a -> b)
     -> List a
     -> List b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance List"
+  _ <*> Nil = Nil
+  Nil <*> _ = Nil
+  -- h1:.t1 <*> x@(h2:.t2) = h1 h2 :. (h1 <$> t2) ++ (t1 <*> x)
+
+  -- gs <*> as =
+  --   atMap gs (\g ->
+  --   atMap as (\a ->
+  --     pure (g a)))
+
+  -- gs <*> as =
+  --   gs `atMap` (\g ->
+  --     as `pam` (\a ->
+  --       g a))
+
+  gs <*> as =
+    flatMap (\g -> map (\a -> g a) as) gs
+
+pam :: List a -> (a -> b) -> List b
+pam = flip map
+
+atMap :: List x -> (x -> List y) -> List y
+atMap = flip flatMap
+
+  -- (<*>) = error "todo: Course.Apply (<*>)#instance List"
 
 -- | Insert into an Optional.
 --
@@ -119,14 +141,26 @@ instance Applicative Optional where
   pure ::
     a
     -> Optional a
-  pure =
-    error "todo: Course.Applicative pure#instance Optional"
+  pure = Full
   (<*>) ::
     Optional (a -> b)
     -> Optional a
     -> Optional b
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance Optional"
+  -- Empty <*> _ = Empty
+  -- _ <*> Empty = Empty
+  -- Full g <*> Full a = Full (g a)
+  f <*> a =
+    bindo f (\f' -> 
+    bindo a (\a' ->
+      pure (f' a')))
+
+  -- f <*> a =
+  --   bindo f (\f' -> 
+  --   bindo a (\a' ->
+  --     pure (f' a')))
+
+bindo:: (Optional a) -> (a -> Optional b) -> Optional b
+bindo = flip bindOptional
 
 -- | Insert into a constant function.
 --
@@ -150,14 +184,14 @@ instance Applicative ((->) t) where
   pure ::
     a
     -> ((->) t a)
-  pure =
-    error "todo: Course.Applicative pure#((->) t)"
-  (<*>) ::
+  pure a _ = a -- ie. pure = const
+  (<*>) ::  -- g:(t -> a -> b) -> h:(t -> a) -> x:t -> b)
     ((->) t (a -> b))
     -> ((->) t a)
     -> ((->) t b)
-  (<*>) =
-    error "todo: Course.Apply (<*>)#instance ((->) t)"
+  -- (<*>) = 
+  (g <*> h) x = g x (h x)   -- t->a->b given t, given (t->a) given t.
+  -- (<*>) = \g h x = g x (h x)
 
 
 -- | Apply a binary function in the environment.
@@ -185,8 +219,12 @@ lift2 ::
   -> f a
   -> f b
   -> f c
-lift2 =
-  error "todo: Course.Applicative#lift2"
+lift2 g fa fb =  -- needs to return an f c
+  g <$> fa <*> fb
+-- (<$>) :: (x -> y) -> f x -> f y
+-- (<*>) :: f (x -> y) -> f x -> f y
+-- g <$> fa :: (a->b->c)<$>(f a) is (f b->c)
+-- g <$> fa <*> fb :: (f b->c) <*> fb is f c.
 
 -- | Apply a ternary function in the environment.
 --
@@ -217,8 +255,9 @@ lift3 ::
   -> f b
   -> f c
   -> f d
-lift3 =
-  error "todo: Course.Applicative#lift3"
+lift3 g a b c =  -- needs to return an f d
+  g <$> a <*> b <*> c
+-- or: lift2 g a b <*> c
 
 -- | Apply a quaternary function in the environment.
 --
@@ -250,8 +289,8 @@ lift4 ::
   -> f c
   -> f d
   -> f e
-lift4 =
-  error "todo: Course.Applicative#lift4"
+lift4 g a b c d =
+  g <$> a <*> b <*> c <*> d
 
 -- | Apply, discarding the value of the first argument.
 -- Pronounced, right apply.

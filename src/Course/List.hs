@@ -394,6 +394,9 @@ notReverse ::
 notReverse Nil = Nil
 notReverse (h :. t) = h :. h :. notReverse t  -- sure, this repeats each element. But if fails the prop.
 
+-- Scratch
+-- func = foldRight (.) id  -- function composition. its type is :: List (b -> b) -> b -> b.
+-- eg. func ((*2) :. (+1) :. Nil) 10  gives 22.
 ---- End of list exercises
 
 largeList ::
