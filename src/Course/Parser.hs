@@ -246,8 +246,8 @@ infixl 3 |||
 list ::
   Parser a
   -> Parser (List a)
-list =
-  error "todo: Course.Parser#list"
+-- one or many (list1), or always produce Nil
+list p = list1 p ||| pure Nil
 
 -- | Return a parser that produces at least one value from the given parser then
 -- continues producing a list of values from the given parser (to ultimately produce a non-empty list).
@@ -265,8 +265,13 @@ list =
 list1 ::
   Parser a
   -> Parser (List a)
-list1 =
-  error "todo: Course.Parser#list1"
+list1 p =
+  -- run parser p and then 0 or many parser and cons the result
+  p      >>= \a ->  -- :: Parser a 
+  list p >>= \b ->
+  pure (a :. b)
+-- or equivalently
+--  (:.) <$> p <*> list p
 
 -- | Return a parser that produces a character but fails if
 --
@@ -614,14 +619,13 @@ instance Applicative Parser where
   pure ::
     a
     -> Parser a
-  pure =
-    error "todo: Course.Parser pure#instance Parser"
+  pure = valueParser
   (<*>) ::
     Parser (a -> b)
     -> Parser a
     -> Parser b
-  (<*>) =
-    error "todo: Course.Parser (<*>)#instance Parser"
+  fxy <*> fx = (\xy -> xy <$> fx) =<< fxy
+    
 
 -- | Write a Monad instance for a @Parser@.
 instance Monad Parser where
@@ -629,5 +633,4 @@ instance Monad Parser where
     (a -> Parser b)
     -> Parser a
     -> Parser b
-  (=<<) =
-    error "todo: Course.Parser (=<<)#instance Parser"
+  (=<<) = bindParser

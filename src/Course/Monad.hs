@@ -76,12 +76,12 @@ infixr 1 =<<
 -- And to return f y from x->y (and we also have an f x), is just applying x->y to f x
 -- ie. xy <$> f x.
 fxy <*> fx = (\xy -> xy <$> fx) =<< fxy
-fxy <*> fx = fxy >>= (\xy -> xy <$> fx)  -- using flipped bind
+-- fxy <*> fx = fxy >>= (\xy -> xy <$> fx)  -- using flipped bind
 -- or this very common pattern:
-fxy <*> fx = 
-  fxy >>= \xy ->
-  fx  >>= \q ->
-  pure (xy q)
+-- fxy <*> fx = 
+--   fxy >>= \xy ->
+--   fx  >>= \q ->
+--   pure (xy q)
 
 infixl 4 <*>
 
@@ -178,7 +178,7 @@ infixl 1 >>=
   -> (a -> f b)
   -> a
   -> f c
-x <=< y = \a -> x =<< y a   -- haven't quite got this one yet...
+x <=< y = \a -> x =<< (y a)   -- haven't quite got this one yet...
 
 infixr 1 <=<
 
