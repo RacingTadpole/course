@@ -77,8 +77,8 @@ unexpectedCharParser c =
 valueParser ::
   a
   -> Parser a
-valueParser =
-  error "todo: Course.Parser#valueParser"
+valueParser a =
+  P (\i -> Result i a)
 
 -- | Return a parser that always fails with the given error.
 --
@@ -87,7 +87,7 @@ valueParser =
 failed ::
   Parser a
 failed =
-  error "todo: Course.Parser#failed"
+  P (\_ -> ErrorResult Failed)
 
 -- | Return a parser that succeeds with a character off the input or fails with an error if the input is empty.
 --
@@ -98,8 +98,10 @@ failed =
 -- True
 character ::
   Parser Char
-character =
-  error "todo: Course.Parser#character"
+character = P (\i -> case i of
+  Nil -> ErrorResult UnexpectedEof
+  h:.t -> Result t h
+  )
 
 -- | Return a parser that maps any succeeding result with the given function.
 --
@@ -112,8 +114,10 @@ mapParser ::
   (a -> b)
   -> Parser a
   -> Parser b
-mapParser =
-  error "todo: Course.Parser#mapParser"
+mapParser f (P p) = P (\i -> case p i of
+  ErrorResult e -> ErrorResult e
+  Result j a -> Result j (f a)
+  )
 
 -- | This is @mapParser@ with the arguments flipped.
 -- It might be more helpful to use this function if you prefer this argument order.
