@@ -14,6 +14,7 @@ import Course.Monad
 import Course.List
 import Course.Optional
 import Data.Char
+import Data.Bool
 
 -- $setup
 -- >>> :set -XOverloadedStrings
@@ -289,8 +290,19 @@ list1 p =
 satisfy ::
   (Char -> Bool)
   -> Parser Char
-satisfy =
-  error "todo: Course.Parser#satisfy"
+satisfy s =
+  character >>= \c ->
+  bool  -- like if-then-else, args reversed.
+    (unexpectedCharParser c)
+    (pure c)
+    (s c)
+  -- or better, use lift3 to pass c all the way through:
+  -- character >>= 
+  -- lift3 bool
+  --   unexpectedCharParser
+  --   pure
+  --   s
+-- "dependency injection is just the Reader monad."
 
 -- | Return a parser that produces the given character but fails if
 --
@@ -301,8 +313,7 @@ satisfy =
 -- /Tip:/ Use the @satisfy@ function.
 is ::
   Char -> Parser Char
-is =
-  error "todo: Course.Parser#is"
+is c = satisfy (== c)
 
 -- | Return a parser that produces a character between '0' and '9' but fails if
 --
@@ -313,8 +324,7 @@ is =
 -- /Tip:/ Use the @satisfy@ and @Data.Char#isDigit@ functions.
 digit ::
   Parser Char
-digit =
-  error "todo: Course.Parser#digit"
+digit = satisfy isDigit
 
 -- | Return a parser that produces zero or a positive integer but fails if
 --
@@ -338,7 +348,9 @@ digit =
 natural ::
   Parser Int
 natural =
-  error "todo: Course.Parser#natural"
+  bindParser (\k -> case read k of Empty -> failed
+                                   Full h -> valueParser h) (list
+                                     digit)
 
 --
 -- | Return a parser that produces a space character but fails if
