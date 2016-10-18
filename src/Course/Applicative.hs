@@ -316,7 +316,7 @@ lift4 g a b c d =
   -> f b
   -> f b
 (*>) =
-  error "todo: Course.Applicative#(*>)"
+  lift2 (flip const)  -- just use the types!  a -> b -> b is flip const, lift2 puts fs on it.
 
 -- | Apply, discarding the value of the second argument.
 -- Pronounced, left apply.
@@ -342,7 +342,7 @@ lift4 g a b c d =
   -> f a
   -> f b
 (<*) =
-  error "todo: Course.Applicative#(<*)"
+  lift2 const   -- or, (<*) j k = (\x _ -> x) <$> j <*> k.
 
 -- | Sequences a list of structures to a structure of list.
 --
@@ -364,9 +364,18 @@ sequence ::
   Applicative f =>
   List (f a)
   -> f (List a)
-sequence =
-  error "todo: Course.Applicative#sequence"
+-- by analogy with seqOptional = foldRight (twiceOptional (:.)) (Full Nil)
+-- sequence = foldRight (lift2 (:.)) (pure Nil)
 
+-- type checking:
+-- lift2 :: Applicative f => (a -> b -> c) -> f a -> f b -> f c
+-- (:.) :: t -> List t -> List t
+-- lift2 (:.) :: f t -> f List t -> f List t
+sequence Nil = pure Nil
+-- h :: f a
+-- t :: List (f a)
+-- sequence t :: f (List a) 
+sequence (h :. t) = lift2 (:.) h (sequence t)
 -- | Replicate an effect a given number of times.
 --
 -- >>> replicateA 4 (Id "hi")
