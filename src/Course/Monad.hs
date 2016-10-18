@@ -65,11 +65,23 @@ infixr 1 =<<
 -- 15
 (<*>) ::
   Monad f =>
-  f (a -> b)
-  -> f a
-  -> f b
-(<*>) =
-  error "todo: Course.Monad#(<*>)"
+  f (x -> y)
+  -> f x
+  -> f y
+-- We want to use bind, =<<, which needs (a->f b) and f a, and produces f b.
+-- <*> needs to produce f y. So let's make b = y.
+-- and make a = x -> y.
+-- Then if we need a->f b, we need a function which takes x->y as an argument
+-- and returns f y. Well, creating a function is easy, (\xy -> ?).
+-- And to return f y from x->y (and we also have an f x), is just applying x->y to f x
+-- ie. xy <$> f x.
+fxy <*> fx = (\xy -> xy <$> fx) =<< fxy
+fxy <*> fx = fxy >>= (\xy -> xy <$> fx)  -- using flipped bind
+-- or this very common pattern:
+fxy <*> fx = 
+  fxy >>= \xy ->
+  fx  >>= \q ->
+  pure (xy q)
 
 infixl 4 <*>
 
@@ -94,8 +106,7 @@ instance Monad List where
     (a -> List b)
     -> List a
     -> List b
-  (=<<) =
-    error "todo: Course.Monad (=<<)#instance List"
+  (=<<) = flatMap
 
 -- | Binds a function on an Optional.
 --
@@ -106,8 +117,7 @@ instance Monad Optional where
     (a -> Optional b)
     -> Optional a
     -> Optional b
-  (=<<) =
-    error "todo: Course.Monad (=<<)#instance Optional"
+  (=<<) = bindOptional
 
 -- | Binds a function on the reader ((->) t).
 --
@@ -118,8 +128,10 @@ instance Monad ((->) t) where
     (a -> ((->) t b))
     -> ((->) t a)
     -> ((->) t b)
-  (=<<) =
-    error "todo: Course.Monad (=<<)#instance ((->) t)"
+-- (a -> t -> b) -> (t -> a) -> (t -> b)
+  (atb =<< ta) t = atb (ta t) t  -- "if it compiles, it must be right"
+  -- (atb =<< ta) t = ((atb) (ta t)) t  -- "if it compiles, it must be right"
+  -- atb =<< ta = (\t -> (atb . ta) t)
 
 -- | Flattens a combined structure to a single structure.
 --
@@ -138,8 +150,7 @@ join ::
   Monad f =>
   f (f a)
   -> f a
-join =
-  error "todo: Course.Monad#join"
+join x = id =<< x  -- or (=<< id)
 
 -- | Implement a flipped version of @(=<<)@, however, use only
 -- @join@ and @(<$>)@.
@@ -152,8 +163,7 @@ join =
   f a
   -> (a -> f b)
   -> f b
-(>>=) =
-  error "todo: Course.Monad#(>>=)"
+(>>=) = flip (=<<)
 
 infixl 1 >>=
 
@@ -168,8 +178,7 @@ infixl 1 >>=
   -> (a -> f b)
   -> a
   -> f c
-(<=<) =
-  error "todo: Course.Monad#(<=<)"
+x <=< y = \a -> x =<< y a   -- haven't quite got this one yet...
 
 infixr 1 <=<
 
