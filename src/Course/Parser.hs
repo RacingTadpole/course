@@ -532,7 +532,7 @@ surnameParser =
 smokerParser ::
   Parser Char
 smokerParser =
-  error "todo: Course.Parser#smokerParser"
+  is 'y' ||| is 'n'
 
 -- | Write part of a parser for Person#phoneBody.
 -- This parser will only produce a string of digits, dots or hyphens.
@@ -554,7 +554,7 @@ smokerParser =
 phoneBodyParser ::
   Parser Chars
 phoneBodyParser =
-  error "todo: Course.Parser#phoneBodyParser"
+  list (digit ||| (is '-') ||| (is '.'))
 
 -- | Write a parser for Person.phone.
 --
@@ -576,7 +576,10 @@ phoneBodyParser =
 phoneParser ::
   Parser Chars
 phoneParser =
-  error "todo: Course.Parser#phoneParser"
+  digit >>= \d ->
+  phoneBodyParser >>= \e ->
+  (is '#') >>= \_ ->
+  pure (d :. e)
 
 -- | Write a parser for Person.
 --
@@ -625,7 +628,27 @@ phoneParser =
 personParser ::
   Parser Person
 personParser =
-  error "todo: Course.Parser#personParser"
+  -- ageParser >>= \age1 ->
+  -- spaces1 >>= \_ ->
+  -- firstNameParser >>= \first1 ->
+  -- spaces1 >>= \_ ->
+  -- surnameParser >>= \surname1 ->
+  -- spaces1 >>= \_ ->
+  -- smokerParser >>= \smoker1 ->
+  -- spaces1 >>= \_ ->
+  -- phoneParser >>= \phone1 ->
+  -- pure (Person age1 first1 surname1 smoker1 phone1)
+
+  do age1 <- ageParser
+     _ <- spaces1
+     first1 <- firstNameParser
+     _ <- spaces1
+     surname1 <- surnameParser
+     _ <- spaces1
+     smoker1 <- smokerParser
+     _ <- spaces1
+     phone1 <- phoneParser
+     pure (Person age1 first1 surname1 smoker1 phone1)
 
 -- Make sure all the tests pass!
 
