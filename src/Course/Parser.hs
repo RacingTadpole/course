@@ -481,6 +481,8 @@ firstNameParser =
      -- pure (c :. d)
 -- or
   -- (:.) <$> upper <*> list lower
+-- or
+  -- lift2 (:.) upper (list lower)
 
 -- | Write a parser for Person.surname.
 --
@@ -499,7 +501,19 @@ firstNameParser =
 surnameParser ::
   Parser Chars
 surnameParser =
-  error "todo: Course.Parser#surnameParser"
+  -- upper >>= \c ->
+  -- lower >>= \d1 ->
+  -- lower >>= \d2 ->
+  -- lower >>= \d3 ->
+  -- lower >>= \d4 ->
+  -- lower >>= \d5 ->
+  -- list lower >>= \d ->
+  -- pure (c :. d1 :. d2 :. d3 :. d4 :. d5 :. d)
+
+  upper >>= \c ->
+  thisMany 5 lower >>= \d ->
+  list lower >>= \e ->
+  pure (c :. d ++ e)
 
 -- | Write a parser for Person.smoker.
 --
