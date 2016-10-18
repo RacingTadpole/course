@@ -192,7 +192,7 @@ flbindParser =
   -> Parser b
   -> Parser b
 (>>>) =
-  error "todo: Course.Parser#(>>>)"
+  lift2 (flip const)
 
 -- | Return a parser that tries the first parser for a successful value.
 --
@@ -215,8 +215,10 @@ flbindParser =
   Parser a
   -> Parser a
   -> Parser a
-(|||) =
-  error "todo: Course.Parser#(|||)"
+P p1 ||| P p2 = P (\i -> case p1 i of
+  ErrorResult _ -> p2 i
+  Result j a -> Result j a
+  )
 
 infixl 3 |||
 
@@ -604,8 +606,7 @@ instance Functor Parser where
     (a -> b)
     -> Parser a
     -> Parser b
-  (<$>) =
-     error "todo: Course.Parser (<$>)#instance Parser"
+  (<$>) = mapParser
 
 -- | Write an Applicative functor instance for a @Parser@.
 -- /Tip:/ Use @bindParser@ and @valueParser@.
