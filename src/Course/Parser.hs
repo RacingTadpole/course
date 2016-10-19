@@ -576,10 +576,15 @@ phoneBodyParser =
 phoneParser ::
   Parser Chars
 phoneParser =
-  digit >>= \d ->
-  phoneBodyParser >>= \e ->
-  (is '#') >>= \_ ->
-  pure (d :. e)
+  -- digit >>= \d ->
+  -- phoneBodyParser >>= \e ->
+  -- (is '#') >>= \_ ->
+  -- pure (d :. e)
+
+  (:.) <$>
+  digit <*>
+  phoneBodyParser <*  -- half your bum fell off, < points to bit you want to keep
+  is '#'
 
 -- | Write a parser for Person.
 --
@@ -639,19 +644,32 @@ personParser =
   -- phoneParser >>= \phone1 ->
   -- pure (Person age1 first1 surname1 smoker1 phone1)
 
-  do age1 <- ageParser
-     _ <- spaces1
-     first1 <- firstNameParser
-     _ <- spaces1
-     surname1 <- surnameParser
-     _ <- spaces1
-     smoker1 <- smokerParser
-     _ <- spaces1
-     phone1 <- phoneParser
-     pure (Person age1 first1 surname1 smoker1 phone1)
+  -- do age1 <- ageParser
+  --    _ <- spaces1
+  --    first1 <- firstNameParser
+  --    _ <- spaces1
+  --    surname1 <- surnameParser
+  --    _ <- spaces1
+  --    smoker1 <- smokerParser
+  --    _ <- spaces1
+  --    phone1 <- phoneParser
+  --    pure (Person age1 first1 surname1 smoker1 phone1)
+
+  Person <$>
+    ageParser <*>
+    spaces1 *>
+    firstNameParser <*>
+    spaces1 *>
+    surnameParser <*>
+    spaces1 *>
+    smokerParser <*>
+    spaces1 *>
+    phoneParser
 
 -- Make sure all the tests pass!
 
+personsParser :: Parser (List Person)
+personsParser = list personParser
 
 -- | Write a Functor instance for a @Parser@.
 -- /Tip:/ Use @bindParser@ and @valueParser@.

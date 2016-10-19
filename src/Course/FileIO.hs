@@ -59,43 +59,103 @@ the contents of c
 -}
 
 -- /Tip:/ use @getArgs@ and @run@
+-- call this with  :main "argument"
 main ::
   IO ()
 main =
-  error "todo: Course.FileIO#main"
+  getArgs >>= \l ->
+    case l of
+      h :. _ -> run h
+      Nil -> putStrLn "pass an argument ya dingbat"
+
 
 type FilePath =
   Chars
 
 -- /Tip:/ Use @getFiles@ and @printFiles@.
 run ::
-  Chars
+  Chars  -- the filename that contains the other file names
   -> IO ()
-run =
-  error "todo: Course.FileIO#run"
+run path = 
+  getFile path >>= \(_, q) ->
+  getFiles (lines q) >>= \x ->
+  printFiles x
+
+-- run path =
+--   do  q <- readFile path
+--       x <- getFiles (lines q)  -- cannot use applicative notation because q on LHS & RHS
+--       printFiles x
 
 getFiles ::
   List FilePath
   -> IO (List (FilePath, Chars))
-getFiles =
-  error "todo: Course.FileIO#getFiles"
+-- getFiles Nil = pure Nil
+-- getFiles (h :. t) =
+--   _undef
+--   getFile h <*>
+--   getFiles t
+
+-- Note getFiles ps = getFile <$> ps  -- :: List( IO (FilePath, Chars))
+-- we need sequence to turn List (IO ...) to IO (List ...)
+getFiles = sequence . (<$>) getFile  -- sequence . (<$>) == traverse
 
 getFile ::
   FilePath
   -> IO (FilePath, Chars)
-getFile =
-  error "todo: Course.FileIO#getFile"
+getFile path =
+  readFile path >>= \c ->
+  pure (path, c)
 
+-- or getFile path = (\q -> (path, q)) <$> readFile path
+-- or getFile path = ((,) path) <$> readFile path
+-- or getFile = \p -> (<$>) ((,) p) (readFile p)
+-- or getFile = lift2 (<$>) (,) readFile
+
+-- note two applicatives compose to make a new applicative
+-- see :t lift2 (<*>)
+  
+-- Eg. printFiles (("mypath", "stuff") :. ("path2", "styf") :. Nil)
 printFiles ::
   List (FilePath, Chars)
   -> IO ()
-printFiles =
-  error "todo: Course.FileIO#printFiles"
+-- printFiles Nil = pure ()
+-- printFiles ((x, y) :. t) =
+--   printFile x y <*
+--   putStrLn ("") <*
+--   printFiles t <*
+--   pure ()
+
+-- printFiles ps =
+--   void (sequence ((\(p, c) -> printFile p c) <$> ps))
+--   void (sequence ((\(p, c) -> uncurry printFile (p, c)) <$> ps))
+--   void (sequence ((<$>) (uncurry printFile) ps))
+--   void . sequence . (<$>) (uncurry printFile) ps
+printFiles = void . sequence . (<$>) (uncurry printFile)
+
+-- printFiles (h :. t) =
+--   printFile (curry) <*  -- not right yet, but on the right track
+--   putStrLn ("") <*
+--   printFiles t <*
+--   pure ()
 
 printFile ::
   FilePath
   -> Chars
   -> IO ()
-printFile =
-  error "todo: Course.FileIO#printFile"
+printFile path contents =
+  -- putStrLn ("============ " ++ path) >>= \_ ->
+  -- putStrLn (contents) >>= \_ ->
+  -- pure ()
+  --
+  -- putStrLn ("============ " ++ path) <*
+  -- putStrLn (contents) <*
+  -- pure ()
+  --
+  putStrLn ("============ " ++ path ++ "\n" ++ contents)  -- Tony says is more readable
+
+  -- do
+  --   x <- putStrLn (s)
+  --   y <- putStrLn(path)
+  --   pure()
+  
 

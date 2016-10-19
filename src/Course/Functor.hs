@@ -129,7 +129,7 @@ void ::
   f a
   -> f ()
 void =
-  error "todo: Course.Functor#void"
+  (<$>) (const ())
 
 -----------------------
 -- SUPPORT LIBRARIES --
